@@ -10,15 +10,19 @@
     
     <script>
         // --- CONFIGURATION ---
-        // 1. ใส่ URL Web App ที่ได้จาก Google Apps Script (/exec)
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxhd8uIDzTT1rNhnkMoJ4CETny7ZDnXu8lpLJBfeboPUkLKqw0B3JVPKcxzO2pnnkpF/exec'; 
+        
+        // 1. URL Web App (ใส่ให้เรียบร้อยแล้ว)
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyb8_zQlQAGNyMc98NCEGAh0xv9FRJ2WaYSbmDKnN3UDK-tm-_ZdnsOj6KZ0TQXV1qP/exec'; 
 
-        // 2. ลิงก์รูปภาพ
+        // 2. ลิงก์รูปภาพ (อัปเดตดาวเรืองเป็นอันใหม่แล้ว)
         const IMAGE_LINKS = {
-            lotus:    'https://lh3.googleusercontent.com/d/1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG',
-            orchid:   'https://lh3.googleusercontent.com/d/1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM',
-            marigold: 'https://lh3.googleusercontent.com/d/1twPglNYRHVs9QxB7kS7UO6VnU6okxpq3',
-            qrcode:   'https://lh3.googleusercontent.com/d/1g1z-sT8BDFYhbxph8uim7fzgtko42Pwd' 
+            lotus:    'https://drive.google.com/uc?export=view&id=1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG',
+            orchid:   'https://drive.google.com/uc?export=view&id=1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM',
+            
+            // ✅ เปลี่ยนเป็นอันใหม่ (ID: 1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0)
+            marigold: 'https://drive.google.com/uc?export=view&id=1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0',
+            
+            qrcode:   'https://drive.google.com/uc?export=view&id=1g1z-sT8BDFYhbxph8uim7fzgtko42Pwd' 
         };
 
         const BANK_INFO = {
@@ -286,6 +290,7 @@
                 const html = `
                 <div class="product-card bg-white border border-gray-100 rounded-2xl p-3 flex gap-4 items-center shadow-sm hover:shadow-md" id="card-${p.id}">
                     <div class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative border border-gray-100 shadow-inner group">
+                        <!-- referrerpolicy="no-referrer" ช่วยให้รูปจาก Drive โหลดได้เสมอ -->
                         <img src="${p.img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/300?text=Image';">
                     </div>
                     <div class="flex-1 min-w-0 py-1">
@@ -513,15 +518,12 @@
             products.forEach(p => cart[p.id] = 0);
             localStorage.removeItem('sathu_cart');
             updateCartUI();
-            renderProducts(); // Re-render to clear quantities visually (hacky but works)
+            renderProducts(); 
             document.getElementById('product-list').innerHTML = ''; // Clear and Re-build
             renderProducts();
 
             // Summary for Modal
             let summaryHtml = '<ul class="list-disc pl-4 space-y-1 mb-2">';
-            const savedItems = JSON.parse(localStorage.getItem('sathu_cart_backup') || "{}"); // We cleared main cart, use backup logic if needed, but here we just re-parse the items sent
-            // Simplified: Just showing text "ได้รับออเดอร์แล้ว" is enough, or parse from 'data' variable if scope allows. 
-            // For now, standard message:
             summaryHtml = `<div class="font-bold text-sathu-red-600">ขอบคุณครับ แอดมินจะรีบตรวจสอบยอดเงินและจัดเตรียมดอกไม้ให้ทันที</div>`;
             
             document.getElementById('order-summary-text').innerHTML = summaryHtml;
