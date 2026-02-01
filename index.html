@@ -18,17 +18,20 @@
         // 1. วาง URL จาก Google Apps Script ตรงนี้
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec"; 
 
-        // 2. ID รูปพื้นหลัง (BG)
-        const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
+        // 2. ชื่อไฟล์รูปพื้นหลัง (ต้องอัปโหลดไฟล์ชื่อนี้ขึ้น GitHub)
+        const BG_HERO_SOURCE = "bg.jpg";
 
-        // 3. ข้อมูลสินค้าสำรอง
+        // 3. ชื่อไฟล์ QR Code (ต้องอัปโหลดไฟล์ชื่อนี้ขึ้น GitHub)
+        const QR_SOURCE = "qr.jpg";
+
+        // 4. ข้อมูลสินค้า (ใช้ชื่อไฟล์รูปภาพตามที่คุณเตรียมไว้)
         const FALLBACK_PRODUCTS = [
-            { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: '1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG' },
-            { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: '1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM' },
-            { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: '1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0' },
-            { id: '4', name: 'พวงมาลัย (เล็ก)', desc: '2 ชาย', price: 5, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
-            { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
-            { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: '1BX929_N-i9_dQTFywCwqIG0_cxZVhbIa' }
+            { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: 'lotus.jpg' },
+            { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: 'orchid.jpg' },
+            { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: 'marigold.jpg' },
+            { id: '4', name: 'พวงมาลัย (เล็ก)', desc: '2 ชาย', price: 5, img: 'malai.jpg' },
+            { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: 'malai.jpg' },
+            { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: 'baisri.jpg' }
         ];
 
         // =========================================================================
@@ -193,7 +196,9 @@
 
                 <div class="p-6 bg-[#FAFAFA] rounded-2xl text-center border border-gray-100">
                     <div class="mb-4 inline-block bg-white p-2 rounded-xl shadow-sm">
-                        <img src="https://promptpay.io/0847936665.png" class="w-24 h-24 mix-blend-multiply opacity-90">
+                        <!-- QR Code จากไฟล์ qr.jpg -->
+                        <img id="qr-img" src="" class="w-24 h-24 mix-blend-multiply opacity-90" 
+                             onerror="this.src='https://promptpay.io/0847936665.png'">
                     </div>
                     <p class="text-xl font-bold text-gray-900 tracking-wider mb-1">084-793-6665</p>
                     <p class="text-xs text-gray-400 uppercase tracking-widest mb-4">วิทย์สรัช สุจารี</p>
@@ -248,21 +253,32 @@
         let userLocation = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('hero-bg').src = `https://drive.google.com/thumbnail?id=${BG_HERO_ID}&sz=w1200`;
+            // โหลดรูปพื้นหลังจากไฟล์ bg.jpg
+            document.getElementById('hero-bg').src = BG_HERO_SOURCE;
+            // โหลด QR Code จากไฟล์ qr.jpg
+            document.getElementById('qr-img').src = QR_SOURCE;
+            
             initSlider();
             
-            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) fetchProducts();
-            else {
-                products = FALLBACK_PRODUCTS;
+            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) {
+                fetchProducts();
+            } else {
+                console.log("No backend configured, using local fallback data.");
+                products = FALLBACK_PRODUCTS; 
                 renderHomeProducts();
             }
         });
 
-        function getImgUrl(id) { return `https://drive.google.com/thumbnail?id=${id}&sz=w600`; }
+        // 🟢 ฟังก์ชันอัจฉริยะ: ดึงรูปจากเครื่อง หรือจาก Drive
+        function getImgUrl(source) { 
+            // ถ้าเป็นชื่อไฟล์ (มีจุด) เช่น 'lotus.jpg' ให้ใช้เลย
+            if (source.includes('.')) return source;
+            // ถ้าเป็น ID ยาวๆ ให้แปลงเป็นลิงก์ Drive
+            return `https://drive.google.com/thumbnail?id=${source}&sz=w600`; 
+        }
 
         async function fetchProducts() {
             try {
-                if(!WEB_APP_URL) throw new Error("No URL");
                 const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
                 const data = await res.json();
                 if(data.success && data.products.length > 0) {
@@ -270,6 +286,7 @@
                     renderHomeProducts();
                 } else throw new Error("No data");
             } catch(e) {
+                console.log('Fetch error, using fallback');
                 products = FALLBACK_PRODUCTS; 
                 renderHomeProducts();
             }
@@ -282,6 +299,7 @@
                 return `
                 <div class="min-w-[160px] relative group cursor-pointer active:scale-95 transition-transform" onclick="${isContact ? `contactLine()` : `addToCart('${p.id}')`}">
                     <div class="h-[220px] w-full rounded-[24px] overflow-hidden bg-white shadow-lg relative border border-white/10">
+                        <!-- ใช้ getImgUrl เพื่อรองรับทั้งไฟล์ในเครื่องและ Drive ID -->
                         <img src="${getImgUrl(p.img)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <div class="absolute bottom-5 left-5 text-white">
