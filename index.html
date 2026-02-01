@@ -34,6 +34,13 @@
             { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: 'baisri.jpg' }
         ];
 
+        // 5. ข้อมูลวันสำคัญ
+        const UPCOMING_EVENTS = [
+            { name: "วันมาฆบูชา", date: "2026-03-03", type: "major" },
+            { name: "วันพระ", date: "2026-02-12", type: "normal" },
+            { name: "วันโกน", date: "2026-02-11", type: "pre" }
+        ];
+
         // =========================================================================
 
         tailwind.config = {
@@ -41,14 +48,16 @@
                 extend: {
                     colors: { "primary": "#B91C1C", "dark": "#111111", "light": "#F9F9F9", "gold": "#D4AF37" },
                     fontFamily: { "sans": ["Inter", "Prompt", "sans-serif"], "serif": ["Playfair Display", "serif"], "logo": ["Charm", "serif"] },
-                    boxShadow: { 'dock': '0 20px 40px -5px rgba(0,0,0,0.3)', 'card': '0 -15px 40px -10px rgba(0,0,0,0.1)' }
+                    boxShadow: { 'dock': '0 20px 40px -5px rgba(0,0,0,0.3)', 'card': '0 -15px 40px -10px rgba(0,0,0,0.1)' },
+                    animation: { 'marquee': 'marquee 20s linear infinite' },
+                    keyframes: { marquee: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(-100%)' } } }
                 }
             }
         }
     </script>
     
     <style>
-        body { background-color: #000; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; justify-content: center; }
+        body { background-color: #000; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; justify-content: center; overscroll-behavior: none; }
         #app-frame { width: 100%; max-width: 430px; background-color: #1a1a1a; height: 100dvh; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(255,255,255,0.05); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(10px); }
@@ -62,8 +71,8 @@
         }
         .slide-panel.active { transform: translateY(0); visibility: visible; }
 
-        /* Slider */
-        .slide-track { position: relative; width: 100%; height: 60px; background: #F3F4F6; border-radius: 999px; display: flex; align-items: center; overflow: hidden; }
+        /* Slider Fixed */
+        .slide-track { position: relative; width: 100%; height: 60px; background: #F3F4F6; border-radius: 999px; display: flex; align-items: center; overflow: hidden; border: 1px solid #e5e5e5; }
         .slide-text { position: absolute; width: 100%; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 2px; color: #9CA3AF; text-transform: uppercase; pointer-events: none; z-index: 1; }
         .slide-knob { position: absolute; left: 4px; width: 52px; height: 52px; background: #B91C1C; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; z-index: 2; cursor: grab; box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4); transition: transform 0.1s linear; }
         .slide-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(185, 28, 28, 0.1); width: 0; z-index: 0; }
@@ -76,6 +85,14 @@
         
         <!-- HOME SCREEN -->
         <div id="home-screen" class="relative w-full h-full bg-dark">
+            
+            <!-- 🔔 MARQUEE ALERT -->
+            <div class="absolute top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm overflow-hidden h-8 flex items-center shadow-lg border-b border-white/10">
+                <div class="animate-marquee whitespace-nowrap text-[10px] text-white font-bold tracking-widest uppercase flex gap-8 w-full" id="marquee-text">
+                    <!-- Text injected by JS -->
+                </div>
+            </div>
+
             <!-- Hero Background -->
             <div class="absolute inset-0 z-0 h-[85vh]">
                 <img id="hero-bg" src="" 
@@ -85,7 +102,7 @@
             </div>
 
             <!-- Header -->
-            <div class="relative z-10 flex flex-col items-center pt-24 text-white text-center">
+            <div class="relative z-10 flex flex-col items-center pt-28 text-white text-center">
                 <h1 class="font-logo text-7xl text-white drop-shadow-2xl mb-2 fade-in" style="animation-delay: 0.1s">สาธุ</h1>
                 <p class="font-sans text-[10px] tracking-[0.5em] uppercase opacity-70 font-light fade-in" style="animation-delay: 0.2s">Digital Nirvana</p>
             </div>
@@ -111,35 +128,31 @@
                 </div>
             </div>
 
-            <!-- 🟢🟢🟢 Bottom Dock (5 Menus) 🟢🟢🟢 -->
+            <!-- 🟢🟢🟢 Bottom Dock (4 Menus Only: Home, Map, Cart, Partner) 🟢🟢🟢 -->
             <div class="absolute bottom-8 left-0 right-0 flex justify-center z-30">
-                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center justify-between px-6 gap-2 w-[90%] max-w-[360px]">
+                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center justify-between px-8 gap-4 w-[90%] max-w-[320px]">
                     
                     <!-- 1. Home -->
-                    <button class="text-white p-2" onclick="window.location.reload()">
+                    <button class="text-white p-2 hover:scale-110 transition-transform" onclick="window.location.reload()">
                         <span class="material-icons-round text-2xl">home</span>
                     </button>
                     
                     <!-- 2. Map (ค้นหาร้าน) -->
-                    <button class="text-white/50 hover:text-white transition-colors p-2" onclick="window.location.href='map.html'" title="ค้นหาร้าน">
+                    <button class="text-white/50 hover:text-white transition-colors p-2 hover:scale-110" onclick="window.location.href='map.html'" title="ค้นหาร้าน">
                         <span class="material-icons-round text-2xl">map</span>
                     </button>
                     
                     <!-- 3. Cart (ตรงกลาง) -->
-                    <button class="text-white/50 hover:text-white transition-colors relative p-2" onclick="openCheckout()">
+                    <button class="text-white/50 hover:text-white transition-colors relative p-2 hover:scale-110" onclick="openCheckout()">
                         <span class="material-icons-round text-3xl">shopping_bag</span>
                         <div id="cart-dot" class="hidden absolute top-2 right-1 w-2.5 h-2.5 bg-primary border border-white rounded-full shadow-glow"></div>
                     </button>
                     
                     <!-- 4. Partner (ลงทะเบียนร้าน) -->
-                    <button class="text-white/50 hover:text-white transition-colors p-2" onclick="window.location.href='partner.html'" title="สมัครพาร์ทเนอร์">
+                    <button class="text-white/50 hover:text-white transition-colors p-2 hover:scale-110" onclick="window.location.href='partner.html'" title="สมัครพาร์ทเนอร์">
                         <span class="material-icons-round text-2xl">storefront</span>
                     </button>
                     
-                    <!-- 5. Admin (ซ่อนไว้) -->
-                    <button onclick="toggleAdminLogin()" class="text-white/50 hover:text-white transition-colors p-2">
-                        <span class="material-icons-round text-2xl">person</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -157,24 +170,39 @@
             <div class="flex-1 overflow-y-auto px-6 pt-6 pb-40 space-y-8 bg-white">
                 <div id="cart-list" class="space-y-6"></div>
 
-                <div class="space-y-5 pt-4 border-t border-dashed border-gray-200">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">ข้อมูลการจัดส่ง</h3>
+                <div class="space-y-6 pt-4 border-t border-dashed border-gray-200">
                     
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="p-3 bg-[#F8F8F8] rounded-2xl border border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors">
-                            <input type="radio" name="timeslot" value="เช้า 07:00-09:00" class="peer sr-only" checked>
-                            <span class="material-icons-round text-orange-400 peer-checked:text-primary mb-1">wb_sunny</span>
-                            <span class="text-xs font-bold text-gray-600 peer-checked:text-primary">รอบเช้า</span>
-                        </label>
-                        <label class="p-3 bg-[#F8F8F8] rounded-2xl border border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors">
-                            <input type="radio" name="timeslot" value="เย็น 16:00-18:00" class="peer sr-only">
-                            <span class="material-icons-round text-indigo-400 peer-checked:text-primary mb-1">nights_stay</span>
-                            <span class="text-xs font-bold text-gray-600 peer-checked:text-primary">รอบเย็น</span>
-                        </label>
+                    <!-- Date Selection -->
+                    <div>
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-widest pl-1 mb-3 flex items-center gap-2">
+                            <span class="material-icons-round text-sm">event_available</span> วันที่ต้องการถวาย
+                        </h3>
+                        <div class="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1" id="date-suggestions"></div>
+                        <input type="date" id="delivery-date" class="w-full bg-[#F8F8F8] border border-gray-200 rounded-2xl px-5 py-3 text-sm font-bold text-gray-700 outline-none focus:border-primary/50 transition-colors">
                     </div>
 
-                    <div onclick="getLocation()" class="flex items-center gap-4 p-4 bg-[#F8F8F8] rounded-2xl border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform">
-                        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-primary shrink-0"><span class="material-icons-round text-xl">near_me</span></div>
+                    <!-- Time Slots -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1 mb-2">รอบเวลาจัดส่ง</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="p-3 bg-[#F8F8F8] rounded-2xl border border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors group">
+                                <input type="radio" name="timeslot" value="เช้า 07:00-09:00" class="peer sr-only" checked>
+                                <span class="material-icons-round text-orange-300 peer-checked:text-primary mb-1 group-hover:text-primary">wb_sunny</span>
+                                <span class="text-xs font-bold text-gray-600 peer-checked:text-primary">รอบเช้า</span>
+                                <span class="text-[9px] text-gray-400">07:00-09:00</span>
+                            </label>
+                            <label class="p-3 bg-[#F8F8F8] rounded-2xl border border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors group">
+                                <input type="radio" name="timeslot" value="เย็น 16:00-18:00" class="peer sr-only">
+                                <span class="material-icons-round text-indigo-300 peer-checked:text-primary mb-1 group-hover:text-primary">nights_stay</span>
+                                <span class="text-xs font-bold text-gray-600 peer-checked:text-primary">รอบเย็น</span>
+                                <span class="text-[9px] text-gray-400">16:00-18:00</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- GPS Location -->
+                    <div onclick="getLocation()" class="flex items-center gap-4 p-4 bg-[#F8F8F8] rounded-2xl border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform hover:border-primary/20">
+                        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-primary shrink-0 shadow-sm"><span class="material-icons-round text-xl">near_me</span></div>
                         <div class="flex-1 min-w-0">
                             <p class="text-[10px] font-bold text-primary tracking-widest uppercase mb-0.5">พิกัด GPS (จำเป็น)</p>
                             <p class="text-sm font-bold text-gray-800 truncate" id="location-text">แตะเพื่อปักหมุด</p>
@@ -196,7 +224,7 @@
 
                 <div class="p-6 bg-[#FAFAFA] rounded-2xl text-center border border-gray-100">
                     <div class="mb-4 inline-block bg-white p-2 rounded-xl shadow-sm">
-                        <!-- QR Code จากไฟล์ qr.jpg -->
+                        <!-- รูป QR Code -->
                         <img id="qr-img" src="" class="w-24 h-24 mix-blend-multiply opacity-90" 
                              onerror="this.src='https://promptpay.io/0847936665.png'">
                     </div>
@@ -253,32 +281,76 @@
         let userLocation = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // โหลดรูปพื้นหลังจากไฟล์ bg.jpg
             document.getElementById('hero-bg').src = BG_HERO_SOURCE;
-            // โหลด QR Code จากไฟล์ qr.jpg
             document.getElementById('qr-img').src = QR_SOURCE;
             
+            // Set Today's Date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('delivery-date').min = today;
+            
+            initMarquee();
+            initDateSuggestions();
             initSlider();
             
-            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) {
-                fetchProducts();
-            } else {
-                console.log("No backend configured, using local fallback data.");
-                products = FALLBACK_PRODUCTS; 
+            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) fetchProducts();
+            else {
+                products = FALLBACK_PRODUCTS;
                 renderHomeProducts();
             }
         });
 
-        // 🟢 ฟังก์ชันอัจฉริยะ: ดึงรูปจากเครื่อง หรือจาก Drive
+        // 🟢🟢🟢 NEW: Smart Date Logic 🟢🟢🟢
+        function initMarquee() {
+            const marquee = document.getElementById('marquee-text');
+            const messages = UPCOMING_EVENTS.map(e => 
+                `✨ ${e.name} (${formatDateThai(e.date)}) เตรียมสั่งดอกไม้ล่วงหน้า ✨`
+            );
+            // Duplicate for smooth loop
+            const fullText = [...messages, ...messages].join('       ');
+            marquee.innerHTML = fullText;
+        }
+
+        function initDateSuggestions() {
+            const container = document.getElementById('date-suggestions');
+            let html = '';
+            
+            UPCOMING_EVENTS.forEach(e => {
+                const isMajor = e.type === 'major';
+                html += `
+                    <div onclick="selectDate('${e.date}')" 
+                         class="flex-shrink-0 px-4 py-2 rounded-xl cursor-pointer active:scale-95 transition-transform border ${isMajor ? 'bg-primary text-white border-primary shadow-lg shadow-red-500/30' : 'bg-white text-gray-600 border-gray-200'}">
+                        <p class="text-[9px] uppercase tracking-widest opacity-80 mb-0.5">${e.name}</p>
+                        <p class="font-bold text-sm leading-none">${formatDateShort(e.date)}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            document.getElementById('delivery-date').value = dateStr;
+            showToast(`เลือกวันจัดส่ง: ${formatDateThai(dateStr)}`);
+        }
+
+        function formatDateThai(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        }
+        
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        }
+
+        // --- RENDER ---
         function getImgUrl(source) { 
-            // ถ้าเป็นชื่อไฟล์ (มีจุด) เช่น 'lotus.jpg' ให้ใช้เลย
             if (source.includes('.')) return source;
-            // ถ้าเป็น ID ยาวๆ ให้แปลงเป็นลิงก์ Drive
             return `https://drive.google.com/thumbnail?id=${source}&sz=w600`; 
         }
 
         async function fetchProducts() {
             try {
+                if(!WEB_APP_URL) throw new Error("No URL");
                 const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
                 const data = await res.json();
                 if(data.success && data.products.length > 0) {
@@ -286,7 +358,6 @@
                     renderHomeProducts();
                 } else throw new Error("No data");
             } catch(e) {
-                console.log('Fetch error, using fallback');
                 products = FALLBACK_PRODUCTS; 
                 renderHomeProducts();
             }
@@ -299,7 +370,6 @@
                 return `
                 <div class="min-w-[160px] relative group cursor-pointer active:scale-95 transition-transform" onclick="${isContact ? `contactLine()` : `addToCart('${p.id}')`}">
                     <div class="h-[220px] w-full rounded-[24px] overflow-hidden bg-white shadow-lg relative border border-white/10">
-                        <!-- ใช้ getImgUrl เพื่อรองรับทั้งไฟล์ในเครื่องและ Drive ID -->
                         <img src="${getImgUrl(p.img)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <div class="absolute bottom-5 left-5 text-white">
@@ -471,6 +541,12 @@
                 resetSlider(); return;
             }
             
+            const date = document.getElementById('delivery-date').value;
+            if (!date) {
+                showToast("กรุณาเลือกวันที่จัดส่ง");
+                resetSlider(); return;
+            }
+
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-overlay').classList.add('flex');
 
@@ -489,6 +565,7 @@
                 totalPrice: totalStr,
                 location: userLocation,
                 timeSlot: timeSlot,
+                deliveryDate: date, // New field
                 slipImage: null
             };
 
@@ -520,13 +597,8 @@
         }
 
         function resetSlider() {
-            document.querySelector('.slider-knob').style.transform = 'translateX(0)';
-            document.querySelector('.slider-track-fill').style.width = '0';
-        }
-        
-        function toggleAdminLogin() {
-            const pw = prompt("Admin Password:");
-            if(pw === "8888") alert("Admin Mode (Management System Coming Soon)");
+            document.querySelector('.slide-knob').style.transform = 'translateX(0)';
+            document.querySelector('.slide-fill').style.width = '0';
         }
     </script>
 </body>
