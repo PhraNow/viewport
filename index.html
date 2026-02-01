@@ -10,19 +10,23 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <script>
-        // 🔴🔴🔴 วาง URL ใหม่จาก Apps Script ตรงนี้ 🔴🔴🔴
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxkIzIYAYh4cn_uHJ48iuGuxouwEJH9_1rQ_ZRJU1lDnAKc8JwjaYY0W0ntZeFgNXrm/exec"; 
+        // =========================================================================
+        // 🔴🔴🔴 วาง URL จาก Google Apps Script ตรงนี้ 🔴🔴🔴
+        // =========================================================================
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpjMK9qcBT0N6M_oVHIPxD2jeEFdWxkddMYxf4gXOkAJmNTXLzACwiTO_Ptq7bd5nJ/exec"; 
+        // =========================================================================
 
-        // ข้อมูลสินค้าสำรอง (กรณีเน็ตหลุด)
+        // ข้อมูลสินค้าสำรอง (จะแสดงทันทีถ้าระบบยังโหลดจาก Sheet ไม่เสร็จ)
         const FALLBACK_PRODUCTS = [
-            { id: '1', name: 'ดอกบัวศิลาขาว', desc: 'คัดพิเศษ', price: 10, img: '1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG' },
-            { id: '2', name: 'กล้วยไม้ม่วงสิริ', desc: 'สดใหม่', price: 10, img: '1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM' },
-            { id: '3', name: 'ดาวเรืองทอง', desc: 'รุ่งเรือง', price: 10, img: '1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0' }
+            { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: '1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG' },
+            { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: '1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM' },
+            { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: '1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0' },
+            { id: '4', name: 'พวงมาลัย (เล็ก)', desc: '2 ชาย', price: 5, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
+            { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
+            { id: '6', name: 'พานบายศรี', desc: 'สั่งทำพิเศษ', price: 0, img: '1BX929_N-i9_dQTFywCwqIG0_cxZVhbIa' }
         ];
 
-        // ลิงก์รูปพื้นหลัง (ใช้ ID เดิมที่คุณให้มา)
         const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
-        // -----------------------------------------------------------
 
         tailwind.config = {
             theme: {
@@ -41,9 +45,15 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(10px); }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-        .slide-up-panel { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); will-change: transform; z-index: 50; }
-        .slide-up-panel.active { transform: translateY(0); }
         
+        .slide-panel { 
+            position: absolute; inset: 0; 
+            transform: translateY(100%); 
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); 
+            z-index: 50; visibility: hidden; background-color: #F9F9F9;
+        }
+        .slide-panel.active { transform: translateY(0); visibility: visible; }
+
         /* Slider */
         .slide-track { position: relative; width: 100%; height: 60px; background: #F3F4F6; border-radius: 999px; display: flex; align-items: center; overflow: hidden; }
         .slide-text { position: absolute; width: 100%; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 2px; color: #9CA3AF; text-transform: uppercase; pointer-events: none; z-index: 1; }
@@ -77,13 +87,13 @@
             <div class="absolute bottom-28 left-0 right-0 z-20 pl-6 fade-in" style="animation-delay: 0.6s">
                 <div class="flex justify-between items-center pr-6 mb-4">
                     <h2 class="font-serif text-2xl font-bold text-white tracking-wide">Vessels of Light</h2>
-                    <span class="text-white/60 text-[10px] font-sans tracking-widest uppercase">เลือกชุดดอกไม้</span>
+                    <span class="text-white/60 text-[10px] font-sans tracking-widest uppercase">เลือกรายการ</span>
                 </div>
                 <!-- Product Scroller -->
                 <div class="flex gap-4 overflow-x-auto no-scrollbar pb-6 pr-6" id="product-scroll">
-                    <div class="flex items-center gap-2 text-white/50 text-sm h-[220px] pl-4">
-                        <span class="animate-spin material-icons-round">sync</span> กำลังเชื่อมต่อฐานข้อมูล...
-                    </div>
+                    <!-- Loading State -->
+                    <div class="min-w-[160px] h-[220px] bg-white/10 rounded-[24px] animate-pulse"></div>
+                    <div class="min-w-[160px] h-[220px] bg-white/10 rounded-[24px] animate-pulse"></div>
                 </div>
             </div>
 
@@ -100,7 +110,7 @@
         </div>
 
         <!-- CHECKOUT SHEET -->
-        <div id="checkout-sheet" class="absolute inset-0 z-50 slide-panel flex flex-col bg-[#F9F9F9]">
+        <div id="checkout-sheet" class="slide-panel flex flex-col">
             <div class="px-6 pt-14 pb-4 bg-white sticky top-0 z-20 shadow-sm flex items-center justify-between border-b border-gray-50">
                 <button onclick="closeCheckout()" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-gray-800 hover:bg-gray-50 transition-colors">
                     <span class="material-icons-round text-2xl">keyboard_arrow_down</span>
@@ -114,6 +124,7 @@
 
                 <div class="space-y-5 pt-4 border-t border-dashed border-gray-200">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">ข้อมูลการจัดส่ง</h3>
+                    
                     <div class="grid grid-cols-2 gap-3">
                         <label class="p-3 bg-[#F8F8F8] rounded-2xl border border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors">
                             <input type="radio" name="timeslot" value="เช้า 07:00-09:00" class="peer sr-only" checked>
@@ -209,6 +220,7 @@
             fetchProducts();
         });
 
+        // --- RENDER ---
         function getImgUrl(id) { return `https://drive.google.com/thumbnail?id=${id}&sz=w600`; }
 
         async function fetchProducts() {
@@ -217,12 +229,12 @@
                 const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
                 const data = await res.json();
                 if(data.success && data.products.length > 0) {
-                    products = data.products.map(p => ({ ...p, img: p.imgId })); // ใช้ imgId จาก Sheet
+                    products = data.products.map(p => ({ ...p, img: p.imgId || p.img }));
                     renderHomeProducts();
                 } else throw new Error("No data");
             } catch(e) {
                 console.log('Using Fallback Data');
-                products = FALLBACK_PRODUCTS; // ใช้ข้อมูลสำรองถ้าต่อ Sheet ไม่ได้
+                products = FALLBACK_PRODUCTS; 
                 renderHomeProducts();
             }
         }
@@ -230,7 +242,6 @@
         function renderHomeProducts() {
             const container = document.getElementById('product-scroll');
             container.innerHTML = products.map(p => {
-                // เช็คว่าราคา 0 หรือไม่ ถ้าใช่ให้เป็นปุ่มติดต่อ
                 const isContact = p.price == 0;
                 return `
                 <div class="min-w-[160px] relative group cursor-pointer active:scale-95 transition-transform" onclick="${isContact ? `contactLine()` : `addToCart('${p.id}')`}">
@@ -283,7 +294,6 @@
         
         function contactLine() {
             alert("กรุณาติดต่อทางร้านโดยตรงสำหรับสินค้านี้");
-            // window.open('https://line.me/ti/p/~yourlineid', '_blank'); // ใส่ลิงก์ไลน์จริงได้
         }
 
         function updateQty(id, delta) {
@@ -333,7 +343,7 @@
 
         function copyBank() {
             navigator.clipboard.writeText("0847936665");
-            showToast("คัดลอกเลขบัญชีแล้ว");
+            showToast("คัดลอกแล้ว");
         }
 
         function handleSlip() {
@@ -370,7 +380,6 @@
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const max = container.clientWidth - knob.offsetWidth - 8;
                 let delta = Math.min(Math.max(0, clientX - startX), max);
-                
                 knob.style.transform = `translateX(${delta}px)`;
                 fill.style.width = `${delta + 28}px`;
 
