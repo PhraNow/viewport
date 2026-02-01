@@ -15,20 +15,21 @@
         // 🔴🔴🔴 CONFIGURATION 🔴🔴🔴
         // =========================================================================
         
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec"; // ใส่ URL Google Apps Script ที่นี่ (ถ้ามี)
+        // 1. วาง URL จาก Google Apps Script ตรงนี้
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec"; 
 
-        // ตั้งค่าสินค้า (ใช้ชื่อไฟล์รูปภาพที่คุณจะอัปโหลดเข้า GitHub)
-        const PRODUCTS_DATA = [
-            { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: 'lotus.jpg' },
-            { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: 'orchid.jpg' },
-            { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: 'marigold.jpg' },
-            { id: '4', name: 'พวงมาลัย (เล็ก)', desc: '2 ชาย', price: 5, img: 'malai.jpg' },
-            { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: 'malai.jpg' },
-            { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: 'baisri.jpg' }
+        // 2. ID รูปพื้นหลัง (BG)
+        const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
+
+        // 3. ข้อมูลสินค้าสำรอง
+        const FALLBACK_PRODUCTS = [
+            { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: '1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG' },
+            { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: '1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM' },
+            { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: '1It1hrUdx69s_U3WPMHMB8IsLGdfJN8H0' },
+            { id: '4', name: 'พวงมาลัย (เล็ก)', desc: '2 ชาย', price: 5, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
+            { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: '18KkBoBHM_KgRMJBBmcLR4ChaH0ct23a8' },
+            { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: '1BX929_N-i9_dQTFywCwqIG0_cxZVhbIa' }
         ];
-
-        const BG_IMAGE = 'bg.jpg';
-        const QR_IMAGE = 'qr.jpg';
 
         // =========================================================================
 
@@ -58,8 +59,8 @@
         }
         .slide-panel.active { transform: translateY(0); visibility: visible; }
 
-        /* Slider Fixed */
-        .slide-track { position: relative; width: 100%; height: 60px; background: #F3F4F6; border-radius: 999px; display: flex; align-items: center; overflow: hidden; border: 1px solid #e5e5e5; }
+        /* Slider */
+        .slide-track { position: relative; width: 100%; height: 60px; background: #F3F4F6; border-radius: 999px; display: flex; align-items: center; overflow: hidden; }
         .slide-text { position: absolute; width: 100%; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 2px; color: #9CA3AF; text-transform: uppercase; pointer-events: none; z-index: 1; }
         .slide-knob { position: absolute; left: 4px; width: 52px; height: 52px; background: #B91C1C; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; z-index: 2; cursor: grab; box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4); transition: transform 0.1s linear; }
         .slide-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(185, 28, 28, 0.1); width: 0; z-index: 0; }
@@ -74,7 +75,6 @@
         <div id="home-screen" class="relative w-full h-full bg-dark">
             <!-- Hero Background -->
             <div class="absolute inset-0 z-0 h-[85vh]">
-                <!-- รูปพื้นหลังโหลดจากไฟล์ bg.jpg -->
                 <img id="hero-bg" src="" 
                      class="w-full h-full object-cover opacity-80 scale-105 hero-mask transition-opacity duration-1000"
                      onerror="this.src='https://images.unsplash.com/photo-1617110825345-0373bb61352b?q=80&w=800'">
@@ -102,19 +102,41 @@
                 </div>
                 
                 <div class="flex gap-4 overflow-x-auto no-scrollbar pb-6 pr-6" id="product-scroll">
-                    <!-- Products injected via JS -->
+                    <div class="flex items-center gap-2 text-white/50 text-sm h-[220px] pl-4">
+                        <span class="animate-spin material-icons-round">sync</span> กำลังโหลดข้อมูล...
+                    </div>
                 </div>
             </div>
 
-            <!-- Bottom Dock -->
+            <!-- 🟢🟢🟢 Bottom Dock (5 Menus) 🟢🟢🟢 -->
             <div class="absolute bottom-8 left-0 right-0 flex justify-center z-30">
-                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center gap-12 px-10">
-                    <button class="text-white"><span class="material-icons-round text-2xl">home</span></button>
-                    <button class="text-white/50 hover:text-white transition-colors relative" onclick="openCheckout()">
-                        <span class="material-icons-round text-2xl">shopping_bag</span>
-                        <div id="cart-dot" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-primary border border-white rounded-full shadow-glow"></div>
+                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center justify-between px-6 gap-2 w-[90%] max-w-[360px]">
+                    
+                    <!-- 1. Home -->
+                    <button class="text-white p-2" onclick="window.location.reload()">
+                        <span class="material-icons-round text-2xl">home</span>
                     </button>
-                    <button class="text-white/50 hover:text-white transition-colors"><span class="material-icons-round text-2xl">person</span></button>
+                    
+                    <!-- 2. Map (ค้นหาร้าน) -->
+                    <button class="text-white/50 hover:text-white transition-colors p-2" onclick="window.location.href='map.html'" title="ค้นหาร้าน">
+                        <span class="material-icons-round text-2xl">map</span>
+                    </button>
+                    
+                    <!-- 3. Cart (ตรงกลาง) -->
+                    <button class="text-white/50 hover:text-white transition-colors relative p-2" onclick="openCheckout()">
+                        <span class="material-icons-round text-3xl">shopping_bag</span>
+                        <div id="cart-dot" class="hidden absolute top-2 right-1 w-2.5 h-2.5 bg-primary border border-white rounded-full shadow-glow"></div>
+                    </button>
+                    
+                    <!-- 4. Partner (ลงทะเบียนร้าน) -->
+                    <button class="text-white/50 hover:text-white transition-colors p-2" onclick="window.location.href='partner.html'" title="สมัครพาร์ทเนอร์">
+                        <span class="material-icons-round text-2xl">storefront</span>
+                    </button>
+                    
+                    <!-- 5. Admin (ซ่อนไว้) -->
+                    <button onclick="toggleAdminLogin()" class="text-white/50 hover:text-white transition-colors p-2">
+                        <span class="material-icons-round text-2xl">person</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -171,9 +193,7 @@
 
                 <div class="p-6 bg-[#FAFAFA] rounded-2xl text-center border border-gray-100">
                     <div class="mb-4 inline-block bg-white p-2 rounded-xl shadow-sm">
-                        <!-- รูป QR Code -->
-                        <img id="qr-img" src="" class="w-24 h-24 mix-blend-multiply opacity-90" 
-                             onerror="this.src='https://promptpay.io/0847936665.png'">
+                        <img src="https://promptpay.io/0847936665.png" class="w-24 h-24 mix-blend-multiply opacity-90">
                     </div>
                     <p class="text-xl font-bold text-gray-900 tracking-wider mb-1">084-793-6665</p>
                     <p class="text-xs text-gray-400 uppercase tracking-widest mb-4">วิทย์สรัช สุจารี</p>
@@ -195,7 +215,6 @@
                         <span class="text-[10px] font-bold text-primary tracking-wider">SECURED</span>
                     </div>
                 </div>
-                <!-- SLIDER FIXED -->
                 <div class="slide-track" id="slider-container">
                     <div class="slide-fill" id="slider-fill"></div>
                     <div class="slide-text">เลื่อนเพื่อถวายบุญ</div>
@@ -228,20 +247,34 @@
         let cart = {};
         let userLocation = null;
 
-        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('hero-bg').src = BG_IMAGE;
-            document.getElementById('qr-img').src = QR_IMAGE;
+            document.getElementById('hero-bg').src = `https://drive.google.com/thumbnail?id=${BG_HERO_ID}&sz=w1200`;
+            initSlider();
             
-            // ใช้ข้อมูล Local ทันทีเพื่อให้แสดงผลเร็วที่สุด
-            products = PRODUCTS_DATA;
-            renderHomeProducts();
-            
-            // เรียก Init Slider (สำคัญ)
-            try { initSlider(); } catch(e) { console.error(e); }
+            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) fetchProducts();
+            else {
+                products = FALLBACK_PRODUCTS;
+                renderHomeProducts();
+            }
         });
 
-        // --- RENDER ---
+        function getImgUrl(id) { return `https://drive.google.com/thumbnail?id=${id}&sz=w600`; }
+
+        async function fetchProducts() {
+            try {
+                if(!WEB_APP_URL) throw new Error("No URL");
+                const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
+                const data = await res.json();
+                if(data.success && data.products.length > 0) {
+                    products = data.products.map(p => ({ ...p, img: p.imgId || p.img }));
+                    renderHomeProducts();
+                } else throw new Error("No data");
+            } catch(e) {
+                products = FALLBACK_PRODUCTS; 
+                renderHomeProducts();
+            }
+        }
+
         function renderHomeProducts() {
             const container = document.getElementById('product-scroll');
             container.innerHTML = products.map(p => {
@@ -249,7 +282,7 @@
                 return `
                 <div class="min-w-[160px] relative group cursor-pointer active:scale-95 transition-transform" onclick="${isContact ? `contactLine()` : `addToCart('${p.id}')`}">
                     <div class="h-[220px] w-full rounded-[24px] overflow-hidden bg-white shadow-lg relative border border-white/10">
-                        <img src="${p.img}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
+                        <img src="${getImgUrl(p.img)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <div class="absolute bottom-5 left-5 text-white">
                             <p class="font-serif text-xl leading-none mb-1 font-medium">${p.name}</p>
@@ -272,7 +305,7 @@
             container.innerHTML = items.map(p => `
                 <div class="flex items-center gap-5">
                     <div class="w-20 h-20 rounded-2xl bg-gray-100 overflow-hidden shrink-0 shadow-sm">
-                        <img src="${p.img}" class="w-full h-full object-cover">
+                        <img src="${getImgUrl(p.img)}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1">
                         <p class="font-bold text-base text-gray-900 font-serif">${p.name}</p>
@@ -365,14 +398,10 @@
             }, 2000);
         }
 
-        // --- SLIDE TO PAY (FIXED) ---
         function initSlider() {
-            const container = document.getElementById('slider-container');
-            const knob = document.getElementById('slider-knob');
-            const fill = document.getElementById('slider-fill');
-            
-            if (!container || !knob) return; // Safety check
-
+            const container = document.querySelector('.slider-container');
+            const knob = document.querySelector('.slider-knob');
+            const fill = document.querySelector('.slider-track-fill');
             let isDragging = false;
             let startX;
 
@@ -387,7 +416,6 @@
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const max = container.clientWidth - knob.offsetWidth - 8;
                 let delta = Math.min(Math.max(0, clientX - startX), max);
-                
                 knob.style.transform = `translateX(${delta}px)`;
                 fill.style.width = `${delta + 28}px`;
 
@@ -464,7 +492,7 @@
                     await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 } catch(e) {}
             } else {
-                await new Promise(r => setTimeout(r, 1500)); // Demo for GitHub Pages
+                await new Promise(r => setTimeout(r, 1500)); 
             }
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('checkout-sheet').classList.remove('active');
@@ -474,8 +502,13 @@
         }
 
         function resetSlider() {
-            document.querySelector('.slide-knob').style.transform = 'translateX(0)';
-            document.querySelector('.slide-fill').style.width = '0';
+            document.querySelector('.slider-knob').style.transform = 'translateX(0)';
+            document.querySelector('.slider-track-fill').style.width = '0';
+        }
+        
+        function toggleAdminLogin() {
+            const pw = prompt("Admin Password:");
+            if(pw === "8888") alert("Admin Mode (Management System Coming Soon)");
         }
     </script>
 </body>
