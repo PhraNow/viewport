@@ -5,18 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SATHU - Sacred Materialism</title>
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Prompt:wght@300;400;500&family=Charm:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <script>
         // =========================================================================
-        // 🔴🔴🔴 วาง URL จาก Google Apps Script ตรงนี้ 🔴🔴🔴
+        // 🔴🔴🔴 CONFIGURATION 🔴🔴🔴
         // =========================================================================
+        
+        // 1. วาง URL จาก Google Apps Script ตรงนี้ (สำคัญมากสำหรับการส่งออเดอร์)
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpjMK9qcBT0N6M_oVHIPxD2jeEFdWxkddMYxf4gXOkAJmNTXLzACwiTO_Ptq7bd5nJ/exec"; 
-        // =========================================================================
 
-        // ข้อมูลสินค้าสำรอง (จะแสดงทันทีถ้าระบบยังโหลดจาก Sheet ไม่เสร็จ)
+        // 2. ID รูปพื้นหลัง (อัปเดตตามที่คุณส่งมาล่าสุด)
+        const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
+
+        // 3. ข้อมูลสินค้าสำรอง (กรณีเน็ตหลุด หรือยังไม่ได้เชื่อม Sheet)
         const FALLBACK_PRODUCTS = [
             { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: '1yTbEv2lg8FU-_4jaXgV8yqpVt_71laKG' },
             { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: '1J1Eq279p2AO2nSI6MH4TZyXgkepQ6JkM' },
@@ -26,7 +31,7 @@
             { id: '6', name: 'พานบายศรี', desc: 'สั่งทำพิเศษ', price: 0, img: '1BX929_N-i9_dQTFywCwqIG0_cxZVhbIa' }
         ];
 
-        const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
+        // =========================================================================
 
         tailwind.config = {
             theme: {
@@ -68,49 +73,57 @@
         
         <!-- HOME SCREEN -->
         <div id="home-screen" class="relative w-full h-full bg-dark">
+            <!-- Hero Background -->
             <div class="absolute inset-0 z-0 h-[85vh]">
-                <img id="hero-bg" src="" class="w-full h-full object-cover opacity-80 scale-105 hero-mask transition-opacity duration-1000" onerror="this.src='https://images.unsplash.com/photo-1617110825345-0373bb61352b?q=80&w=800'">
+                <img id="hero-bg" src="" 
+                     class="w-full h-full object-cover opacity-80 scale-105 hero-mask transition-opacity duration-1000"
+                     onerror="this.src='https://images.unsplash.com/photo-1617110825345-0373bb61352b?q=80&w=800'">
                 <div class="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-black/40"></div>
             </div>
 
+            <!-- Header -->
             <div class="relative z-10 flex flex-col items-center pt-24 text-white text-center">
                 <h1 class="font-logo text-7xl text-white drop-shadow-2xl mb-2 fade-in" style="animation-delay: 0.1s">สาธุ</h1>
                 <p class="font-sans text-[10px] tracking-[0.5em] uppercase opacity-70 font-light fade-in" style="animation-delay: 0.2s">Digital Nirvana</p>
             </div>
 
+            <!-- Quote -->
             <div class="absolute bottom-60 left-0 right-0 px-10 text-center z-10 fade-in" style="animation-delay: 0.4s">
                 <p class="font-serif italic text-white/80 text-xl leading-relaxed font-light">
                     "ความศรัทธาที่พบได้ในความใสของแก้ว และความบริสุทธิ์ของรูปทรง"
                 </p>
             </div>
 
+            <!-- Product Showcase -->
             <div class="absolute bottom-28 left-0 right-0 z-20 pl-6 fade-in" style="animation-delay: 0.6s">
                 <div class="flex justify-between items-center pr-6 mb-4">
                     <h2 class="font-serif text-2xl font-bold text-white tracking-wide">Vessels of Light</h2>
-                    <span class="text-white/60 text-[10px] font-sans tracking-widest uppercase">เลือกรายการ</span>
+                    <span class="text-white/60 text-[10px] font-sans tracking-widest uppercase">เลือกชุดดอกไม้</span>
                 </div>
-                <!-- Product Scroller -->
+                
                 <div class="flex gap-4 overflow-x-auto no-scrollbar pb-6 pr-6" id="product-scroll">
-                    <!-- Loading State -->
-                    <div class="min-w-[160px] h-[220px] bg-white/10 rounded-[24px] animate-pulse"></div>
-                    <div class="min-w-[160px] h-[220px] bg-white/10 rounded-[24px] animate-pulse"></div>
+                    <div class="flex items-center gap-2 text-white/50 text-sm h-[220px] pl-4">
+                        <span class="animate-spin material-icons-round">sync</span> กำลังโหลดข้อมูล...
+                    </div>
                 </div>
             </div>
 
+            <!-- Bottom Dock -->
             <div class="absolute bottom-8 left-0 right-0 flex justify-center z-30">
-                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center gap-12 px-10">
+                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center gap-10 px-8">
                     <button class="text-white"><span class="material-icons-round text-2xl">home</span></button>
+                    <button class="text-white/50 hover:text-white transition-colors" onclick="window.location.href='map.html'"><span class="material-icons-round text-2xl">map</span></button>
                     <button class="text-white/50 hover:text-white transition-colors relative" onclick="openCheckout()">
                         <span class="material-icons-round text-2xl">shopping_bag</span>
                         <div id="cart-dot" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-primary border border-white rounded-full shadow-glow"></div>
                     </button>
-                    <button class="text-white/50 hover:text-white transition-colors"><span class="material-icons-round text-2xl">person</span></button>
+                    <button class="text-white/50 hover:text-white transition-colors" onclick="window.location.href='partner.html'"><span class="material-icons-round text-2xl">storefront</span></button>
                 </div>
             </div>
         </div>
 
         <!-- CHECKOUT SHEET -->
-        <div id="checkout-sheet" class="slide-panel flex flex-col">
+        <div id="checkout-sheet" class="slide-panel flex flex-col bg-[#F9F9F9]">
             <div class="px-6 pt-14 pb-4 bg-white sticky top-0 z-20 shadow-sm flex items-center justify-between border-b border-gray-50">
                 <button onclick="closeCheckout()" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-gray-800 hover:bg-gray-50 transition-colors">
                     <span class="material-icons-round text-2xl">keyboard_arrow_down</span>
@@ -137,6 +150,7 @@
                             <span class="text-xs font-bold text-gray-600 peer-checked:text-primary">รอบเย็น</span>
                         </label>
                     </div>
+
                     <div onclick="getLocation()" class="flex items-center gap-4 p-4 bg-[#F8F8F8] rounded-2xl border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform">
                         <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-primary shrink-0"><span class="material-icons-round text-xl">near_me</span></div>
                         <div class="flex-1 min-w-0">
@@ -145,11 +159,12 @@
                         </div>
                         <span class="material-icons-round text-gray-300">chevron_right</span>
                     </div>
+
                     <div class="grid grid-cols-2 gap-3">
                         <input id="inp-name" placeholder="ชื่อผู้ติดต่อ" class="bg-[#F8F8F8] border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none focus:ring-1 focus:ring-primary/20">
                         <input id="inp-phone" type="tel" placeholder="เบอร์โทรศัพท์" class="bg-[#F8F8F8] border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none focus:ring-1 focus:ring-primary/20">
                     </div>
-                    <textarea id="inp-address" placeholder="บ้านเลขที่ / จุดสังเกต" class="w-full bg-[#F8F8F8] border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none focus:ring-1 focus:ring-primary/20 h-24 resize-none"></textarea>
+                    <textarea id="inp-address" placeholder="บ้านเลขที่ / จุดสังเกต (เช่น ประตูรั้วสีขาว, ฝากป้อมยาม)" class="w-full bg-[#F8F8F8] border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none focus:ring-1 focus:ring-primary/20 h-24 resize-none"></textarea>
                 </div>
 
                 <div class="space-y-2">
@@ -213,19 +228,22 @@
         let cart = {};
         let userLocation = null;
 
-        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
+            // โหลดรูปพื้นหลังจาก ID ที่กำหนด
             document.getElementById('hero-bg').src = `https://drive.google.com/thumbnail?id=${BG_HERO_ID}&sz=w1200`;
+            
             initSlider();
-            fetchProducts();
+            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) fetchProducts();
+            else {
+                products = FALLBACK_PRODUCTS; // ใช้ข้อมูลสำรองทันทีถ้าไม่มี URL
+                renderHomeProducts();
+            }
         });
 
-        // --- RENDER ---
         function getImgUrl(id) { return `https://drive.google.com/thumbnail?id=${id}&sz=w600`; }
 
         async function fetchProducts() {
             try {
-                if(!WEB_APP_URL) throw new Error("No URL");
                 const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
                 const data = await res.json();
                 if(data.success && data.products.length > 0) {
@@ -458,6 +476,7 @@
             } else {
                 await new Promise(r => setTimeout(r, 1500)); // Demo
             }
+
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('checkout-sheet').classList.remove('active');
             document.getElementById('success-overlay').classList.remove('hidden');
