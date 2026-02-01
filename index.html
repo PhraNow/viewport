@@ -15,26 +15,10 @@
         // 🔴🔴🔴 CONFIGURATION 🔴🔴🔴
         // =========================================================================
         
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec"; // ใส่ URL Google Apps Script ที่นี่ (ถ้ามี)
 
-        // 🖼️ ตั้งค่ารูปภาพที่นี่ (ระบบจะใช้รูปนี้เสมอ ไม่สนใน Sheet)
-        // Key คือ ID สินค้า (ต้องตรงกับใน Sheet)
-        const LOCAL_IMAGES = {
-            '1': 'lotus.jpg',     // ดอกบัว
-            '2': 'orchid.jpg',    // กล้วยไม้
-            '3': 'marigold.jpg',  // ดาวเรือง
-            '4': 'malai.jpg',     // พวงมาลัยเล็ก
-            '5': 'malai.jpg',     // พวงมาลัยใหญ่
-            '6': 'baisri.jpg'     // พานบายศรี
-        };
-
-        const ASSETS = {
-            bg: 'bg.jpg',
-            qr: 'qr.jpg'
-        };
-
-        // ข้อมูลสำรอง (Backup)
-        const FALLBACK_PRODUCTS = [
+        // ตั้งค่าสินค้า (ใช้ชื่อไฟล์รูปภาพที่คุณจะอัปโหลดเข้า GitHub)
+        const PRODUCTS_DATA = [
             { id: '1', name: 'ช่อดอกบัวสด', desc: 'คัดพิเศษ', price: 10, img: 'lotus.jpg' },
             { id: '2', name: 'ช่อกล้วยไม้สด', desc: 'สดใหม่', price: 10, img: 'orchid.jpg' },
             { id: '3', name: 'ช่อดาวเรืองสด', desc: 'รุ่งเรือง', price: 10, img: 'marigold.jpg' },
@@ -42,6 +26,9 @@
             { id: '5', name: 'พวงมาลัย (ใหญ่)', desc: '2 ชาย', price: 10, img: 'malai.jpg' },
             { id: '6', name: 'พานบายศรี', desc: 'ติดต่อร้าน', price: 0, img: 'baisri.jpg' }
         ];
+
+        const BG_IMAGE = 'bg.jpg';
+        const QR_IMAGE = 'qr.jpg';
 
         // =========================================================================
 
@@ -87,6 +74,7 @@
         <div id="home-screen" class="relative w-full h-full bg-dark">
             <!-- Hero Background -->
             <div class="absolute inset-0 z-0 h-[85vh]">
+                <!-- รูปพื้นหลังโหลดจากไฟล์ bg.jpg -->
                 <img id="hero-bg" src="" 
                      class="w-full h-full object-cover opacity-80 scale-105 hero-mask transition-opacity duration-1000"
                      onerror="this.src='https://images.unsplash.com/photo-1617110825345-0373bb61352b?q=80&w=800'">
@@ -121,13 +109,12 @@
             <!-- Bottom Dock -->
             <div class="absolute bottom-8 left-0 right-0 flex justify-center z-30">
                 <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full h-16 shadow-dock flex items-center gap-12 px-10">
-                    <button class="text-white hover:scale-110 transition-transform" onclick="window.location.reload()"><span class="material-icons-round text-2xl">home</span></button>
-                    <button class="text-white/50 hover:text-white transition-colors" onclick="window.location.href='map.html'"><span class="material-icons-round text-2xl">map</span></button>
+                    <button class="text-white"><span class="material-icons-round text-2xl">home</span></button>
                     <button class="text-white/50 hover:text-white transition-colors relative" onclick="openCheckout()">
-                        <span class="material-icons-round text-3xl">shopping_bag</span>
+                        <span class="material-icons-round text-2xl">shopping_bag</span>
                         <div id="cart-dot" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-primary border border-white rounded-full shadow-glow"></div>
                     </button>
-                    <button class="text-white/50 hover:text-white transition-colors" onclick="window.location.href='partner.html'"><span class="material-icons-round text-3xl">storefront</span></button>
+                    <button class="text-white/50 hover:text-white transition-colors"><span class="material-icons-round text-2xl">person</span></button>
                 </div>
             </div>
         </div>
@@ -208,6 +195,7 @@
                         <span class="text-[10px] font-bold text-primary tracking-wider">SECURED</span>
                     </div>
                 </div>
+                <!-- SLIDER FIXED -->
                 <div class="slide-track" id="slider-container">
                     <div class="slide-fill" id="slider-fill"></div>
                     <div class="slide-text">เลื่อนเพื่อถวายบุญ</div>
@@ -240,51 +228,20 @@
         let cart = {};
         let userLocation = null;
 
+        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            // โหลดรูปจากไฟล์ในเครื่อง
-            document.getElementById('hero-bg').src = ASSETS.bg;
-            document.getElementById('qr-img').src = ASSETS.qr;
+            document.getElementById('hero-bg').src = BG_IMAGE;
+            document.getElementById('qr-img').src = QR_IMAGE;
             
-            initSlider();
+            // ใช้ข้อมูล Local ทันทีเพื่อให้แสดงผลเร็วที่สุด
+            products = PRODUCTS_DATA;
+            renderHomeProducts();
             
-            if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) {
-                fetchProducts();
-            } else {
-                console.log("Using Fallback Data (Offline/No Backend)");
-                products = FALLBACK_PRODUCTS; 
-                renderHomeProducts();
-            }
+            // เรียก Init Slider (สำคัญ)
+            try { initSlider(); } catch(e) { console.error(e); }
         });
 
-        // 🟢 ฟังก์ชันนี้สำคัญ: บังคับให้ใช้รูปจาก Local เสมอ
-        function getImgUrl(p) {
-            // ใช้ ID สินค้า เพื่อดึงชื่อไฟล์จาก LOCAL_IMAGES
-            // ถ้าไม่มี ให้ใช้รูปที่ติดมากับข้อมูล หรือ placeholder
-            return LOCAL_IMAGES[p.id] || p.img || "https://placehold.co/200x300?text=No+Image";
-        }
-
-        async function fetchProducts() {
-            try {
-                if(!WEB_APP_URL) throw new Error("No URL");
-                const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
-                const data = await res.json();
-                
-                if(data.success && data.products.length > 0) {
-                    // เอาข้อมูลจาก Sheet (ราคา, สต็อก) มาผสมกับรูปในเครื่อง
-                    products = data.products.map(p => ({
-                        ...p,
-                        // เราไม่ใช้ ImgID จาก Sheet แล้ว แต่ใช้ Mapping ในโค้ดแทน
-                        img: LOCAL_IMAGES[p.id] || 'https://placehold.co/200x300?text=No+Image'
-                    }));
-                    renderHomeProducts();
-                } else throw new Error("No data");
-            } catch(e) {
-                console.log('Fetch error, using fallback');
-                products = FALLBACK_PRODUCTS; 
-                renderHomeProducts();
-            }
-        }
-
+        // --- RENDER ---
         function renderHomeProducts() {
             const container = document.getElementById('product-scroll');
             container.innerHTML = products.map(p => {
@@ -410,9 +367,12 @@
 
         // --- SLIDE TO PAY (FIXED) ---
         function initSlider() {
-            const container = document.querySelector('.slider-container');
-            const knob = document.querySelector('.slider-knob');
-            const fill = document.querySelector('.slider-track-fill');
+            const container = document.getElementById('slider-container');
+            const knob = document.getElementById('slider-knob');
+            const fill = document.getElementById('slider-fill');
+            
+            if (!container || !knob) return; // Safety check
+
             let isDragging = false;
             let startX;
 
@@ -427,6 +387,7 @@
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const max = container.clientWidth - knob.offsetWidth - 8;
                 let delta = Math.min(Math.max(0, clientX - startX), max);
+                
                 knob.style.transform = `translateX(${delta}px)`;
                 fill.style.width = `${delta + 28}px`;
 
@@ -503,7 +464,7 @@
                     await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 } catch(e) {}
             } else {
-                await new Promise(r => setTimeout(r, 1500)); 
+                await new Promise(r => setTimeout(r, 1500)); // Demo for GitHub Pages
             }
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('checkout-sheet').classList.remove('active');
@@ -513,8 +474,8 @@
         }
 
         function resetSlider() {
-            document.querySelector('.slider-knob').style.transform = 'translateX(0)';
-            document.querySelector('.slider-track-fill').style.width = '0';
+            document.querySelector('.slide-knob').style.transform = 'translateX(0)';
+            document.querySelector('.slide-fill').style.width = '0';
         }
     </script>
 </body>
