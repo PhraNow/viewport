@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ค้นหาร้านดอกไม้ - SATHU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { "primary": "#B91C1C", "dark": "#111111" }, fontFamily: { "sans": ["Prompt", "sans-serif"] } }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000; display: flex; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        #app-frame { width: 100%; max-width: 430px; background-color: #fff; height: 100dvh; position: relative; }
+        #map { height: 100%; width: 100%; z-index: 0; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div id="app-frame">
+        <!-- Header Overlay -->
+        <div class="absolute top-0 left-0 right-0 z-10 p-6 pt-12 pointer-events-none">
+            <div class="glass-panel p-4 flex items-center justify-between pointer-events-auto">
+                <button onclick="window.location.href='index.html'" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                    <span class="material-icons-round">arrow_back</span>
+                </button>
+                <div class="text-center">
+                    <h1 class="font-bold text-lg text-dark">เลือกร้านดอกไม้</h1>
+                    <p class="text-xs text-gray-400">ใกล้ฉัน (Udon Thani)</p>
+                </div>
+                <div class="w-10"></div>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Shop Info Card (Hidden by default) -->
+        <div id="shop-card" class="absolute bottom-8 left-6 right-6 z-10 glass-panel p-5 transform translate-y-[150%] transition-transform duration-300">
+            <div class="flex gap-4">
+                <div class="w-16 h-16 rounded-xl bg-gray-200 overflow-hidden shrink-0">
+                    <img src="https://images.unsplash.com/photo-1596436574447-d57608e61230?q=80&w=200" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg text-primary" id="shop-name">ชื่อร้าน</h3>
+                    <p class="text-xs text-gray-500 mb-2" id="shop-dist">ห่างจากคุณ 0.0 กม.</p>
+                    <div class="flex gap-2">
+                        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded">เปิดอยู่</span>
+                        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded">⭐ 4.8</span>
+                    </div>
+                </div>
+            </div>
+            <button class="w-full mt-4 bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-red-900/20 active:scale-95 transition-transform">
+                เลือกซื้อจากร้านนี้
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        
+        // Mockup Shop Data (อนาคตดึงจาก Sheet)
+        const shops = [
+            { id: 1, name: "ร้านป้าสมจิตร ดอกไม้สด", lat: 17.416, lng: 102.787, dist: "1.2 กม." },
+            { id: 2, name: "Sathu Official Store", lat: 17.420, lng: 102.780, dist: "0.5 กม." },
+            { id: 3, name: "มาลัยทิพย์", lat: 17.410, lng: 102.790, dist: "2.4 กม." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+        });
+
+        function initMap() {
+            // Udon Thani Center
+            map = L.map('map', { zoomControl: false }).setView([17.415, 102.786], 14);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '©OpenStreetMap, ©CartoDB'
+            }).addTo(map);
+
+            // Add Shop Pins
+            shops.forEach(shop => {
+                const icon = L.divIcon({
+                    className: 'custom-icon',
+                    html: `<div class="w-8 h-8 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white"><span class="material-icons-round text-sm">store</span></div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32]
+                });
+                
+                const marker = L.marker([shop.lat, shop.lng], {icon: icon}).addTo(map);
+                marker.on('click', () => showShop(shop));
+            });
+
+            // Add User Pin (Mock)
+            const userIcon = L.divIcon({
+                className: 'user-icon',
+                html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>`,
+                iconSize: [16, 16]
+            });
+            L.marker([17.415, 102.786], {icon: userIcon}).addTo(map);
+        }
+
+        function showShop(shop) {
+            document.getElementById('shop-name').innerText = shop.name;
+            document.getElementById('shop-dist').innerText = `ห่างจากคุณ ${shop.dist}`;
+            document.getElementById('shop-card').classList.remove('translate-y-[150%]');
+            
+            // Pan map to shop
+            map.flyTo([shop.lat, shop.lng], 15);
+        }
+    </script>
+</body>
+</html>

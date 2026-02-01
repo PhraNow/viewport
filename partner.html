@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ร่วมเป็นพาร์ทเนอร์ - SATHU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&family=Charm:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <script>
+        // 🔴🔴🔴 วาง URL ของ Google Apps Script ที่นี่ (ตัวเดียวกับ index.html) 🔴🔴🔴
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpjMK9qcBT0N6M_oVHIPxD2jeEFdWxkddMYxf4gXOkAJmNTXLzACwiTO_Ptq7bd5nJ/exec"; 
+
+        tailwind.config = {
+            theme: {
+                extend: { colors: { "primary": "#B91C1C", "dark": "#111111", "gold": "#D4AF37" }, fontFamily: { "sans": ["Prompt", "sans-serif"], "logo": ["Charm", "serif"] } }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000; display: flex; justify-content: center; min-height: 100vh; margin: 0; font-family: 'Prompt', sans-serif; }
+        #app-frame { width: 100%; max-width: 430px; background-color: #fff; height: 100dvh; position: relative; overflow-y: auto; }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <div id="app-frame">
+        <!-- Hero -->
+        <div class="relative h-[250px] bg-dark text-white flex flex-col justify-end p-8">
+            <button onclick="window.location.href='index.html'" class="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm hover:bg-white/20 transition-colors">
+                <span class="material-icons-round">arrow_back</span>
+            </button>
+            <span class="text-gold uppercase tracking-[0.3em] text-[10px] font-bold mb-2">Sathu Partner</span>
+            <h1 class="text-3xl font-bold leading-tight">ร่วมเป็นส่วนหนึ่งของ<br>เครือข่ายสะพานบุญ</h1>
+            <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-8 pb-32">
+            <p class="text-gray-500 text-sm mb-8">
+                เปลี่ยนร้านดอกไม้ของคุณให้เข้าถึงลูกค้าได้มากขึ้น ด้วยแพลตฟอร์ม "สาธุ" ค่าธรรมเนียมเพียง <span class="text-primary font-bold">1 บาท/ออเดอร์</span> เท่านั้น
+            </p>
+
+            <form id="partner-form" class="space-y-5">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">ชื่อร้านค้า</label>
+                    <input type="text" id="shop-name" placeholder="เช่น ร้านดอกไม้แม่มณี" class="w-full border-b border-gray-300 py-3 focus:border-primary outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">ชื่อเจ้าของร้าน</label>
+                    <input type="text" id="owner-name" placeholder="ชื่อ-นามสกุล" class="w-full border-b border-gray-300 py-3 focus:border-primary outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">เบอร์โทรติดต่อ</label>
+                    <input type="tel" id="contact-phone" placeholder="08x-xxx-xxxx" class="w-full border-b border-gray-300 py-3 focus:border-primary outline-none transition-colors">
+                </div>
+                
+                <div class="pt-4">
+                    <label class="text-xs font-bold text-gray-400 uppercase mb-3 block">ตำแหน่งร้าน</label>
+                    <div onclick="getLocation()" id="location-box" class="h-32 bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-400 border border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors hover:border-primary hover:text-primary">
+                        <span class="material-icons-round mb-2 text-2xl">add_location_alt</span>
+                        <span class="text-xs font-bold" id="location-text">แตะเพื่อปักหมุดร้าน (GPS)</span>
+                    </div>
+                </div>
+
+                <div class="pt-8">
+                    <button type="button" onclick="submitPartner()" class="w-full bg-primary text-white py-4 rounded-full font-bold shadow-lg shadow-red-900/20 active:scale-95 transition-transform hover:bg-red-800">
+                        ลงทะเบียนร้านค้า
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="absolute inset-0 z-50 bg-white/80 hidden flex-col items-center justify-center">
+            <div class="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p class="text-xs font-bold text-primary tracking-widest uppercase animate-pulse">กำลังส่งข้อมูล...</p>
+        </div>
+    </div>
+
+    <script>
+        let shopLocation = "";
+
+        function getLocation() {
+            const box = document.getElementById('location-box');
+            const text = document.getElementById('location-text');
+            
+            text.innerText = "กำลังระบุพิกัด...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        shopLocation = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                        text.innerText = "ปักหมุดเรียบร้อย ✅";
+                        box.classList.remove('bg-gray-100', 'text-gray-400', 'border-dashed');
+                        box.classList.add('bg-green-50', 'text-green-600', 'border-solid', 'border-green-200');
+                    },
+                    (err) => {
+                        console.error(err);
+                        text.innerText = "ไม่สามารถระบุพิกัดได้ (ใช้พิกัดจำลอง)";
+                        shopLocation = "17.41500, 102.78600 (Mock)";
+                    }
+                );
+            } else {
+                alert("เบราว์เซอร์ของคุณไม่รองรับ GPS");
+            }
+        }
+
+        function submitPartner() {
+            // 1. ตรวจสอบข้อมูล
+            const shopName = document.getElementById('shop-name').value;
+            const ownerName = document.getElementById('owner-name').value;
+            const phone = document.getElementById('contact-phone').value;
+
+            if (!shopName || !ownerName || !phone) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
+
+            if (!WEB_APP_URL) {
+                alert("⚠️ กรุณาใส่ลิงก์ Web App URL ในโค้ดบรรทัดที่ 16 ก่อนครับ");
+                return;
+            }
+
+            // 2. แสดง Loading
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('flex');
+
+            // 3. เตรียมข้อมูลส่ง
+            const payload = {
+                action: 'registerPartner', // ชื่อ Action ใหม่สำหรับฝั่ง Server
+                shopName: shopName,
+                ownerName: ownerName,
+                phone: phone,
+                location: shopLocation || "ไม่ระบุ"
+            };
+
+            // 4. ส่งข้อมูลด้วย fetch
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('loading-overlay').classList.remove('flex');
+
+                if (data.success) {
+                    alert("✅ ลงทะเบียนสำเร็จ! เจ้าหน้าที่จะติดต่อกลับภายใน 24 ชม.");
+                    window.location.href = 'index.html';
+                } else {
+                    // กรณี Server ยังไม่รองรับ action นี้ ให้แจ้งเตือนแบบ Soft fail (เพื่อ UX)
+                    console.warn("Server response:", data);
+                    alert("ส่งข้อมูลเรียบร้อย (Demo Mode)");
+                    window.location.href = 'index.html';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('loading-overlay').classList.remove('flex');
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่");
+            });
+        }
+    </script>
+</body>
+</html>
