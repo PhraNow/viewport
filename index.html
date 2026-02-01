@@ -15,8 +15,8 @@
         // 🔴🔴🔴 CONFIGURATION 🔴🔴🔴
         // =========================================================================
         
-        // 1. วาง URL จาก Google Apps Script ตรงนี้ (สำคัญมากสำหรับการส่งออเดอร์)
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpjMK9qcBT0N6M_oVHIPxD2jeEFdWxkddMYxf4gXOkAJmNTXLzACwiTO_Ptq7bd5nJ/exec"; 
+        // 1. วาง URL จาก Google Apps Script ตรงนี้ (ใช้ลิงก์เดิมได้ตลอดถ้ารู้จักวิธี Manage Deployment)
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfdU30cofQ7cH_JiQNQJXiWYB9ia6KiTo3y_wxjSMnkWidzslDq1nMaVq79PTNDgY0/exec"; 
 
         // 2. ID รูปพื้นหลัง (อัปเดตตามที่คุณส่งมาล่าสุด)
         const BG_HERO_ID = "1Q2q51p0NPisY_D9V1AWWZ60I3OHSqV-_";
@@ -232,7 +232,9 @@
             // โหลดรูปพื้นหลังจาก ID ที่กำหนด
             document.getElementById('hero-bg').src = `https://drive.google.com/thumbnail?id=${BG_HERO_ID}&sz=w1200`;
             
-            initSlider();
+            // เรียก initSlider ทันทีเพื่อป้องกัน Error
+            try { initSlider(); } catch(e) { console.error("Slider Init Error", e); }
+
             if(WEB_APP_URL && WEB_APP_URL.includes('/exec')) fetchProducts();
             else {
                 products = FALLBACK_PRODUCTS; // ใช้ข้อมูลสำรองทันทีถ้าไม่มี URL
@@ -244,6 +246,7 @@
 
         async function fetchProducts() {
             try {
+                if(!WEB_APP_URL) throw new Error("No URL");
                 const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
                 const data = await res.json();
                 if(data.success && data.products.length > 0) {
